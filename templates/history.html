@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scan History - Wapiti UI</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css">
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        /* History page specific styles */
+        .history-controls {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .search-box {
+            flex: 1;
+            min-width: 200px;
+            position: relative;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 10px 14px 10px 38px;
+            border: 1.5px solid #E5E5EA;
+            border-radius: var(--radius-sm);
+            font-size: 14px;
+            background: var(--bg-white);
+            color: var(--text-dark);
+            transition: all var(--transition-fast);
+            font-family: inherit;
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: var(--red-primary);
+            box-shadow: 0 0 0 3px rgba(255, 59, 48, 0.12);
+        }
+
+        .search-box i {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            font-size: 16px;
+        }
+
+        .status-badge {
+            padding: 3px 12px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .status-badge.done {
+            background: var(--success-dim);
+            color: var(--success);
+        }
+
+        .status-badge.pending {
+            background: var(--warning-dim);
+            color: var(--warning);
+        }
+
+        .status-badge.failed {
+            background: var(--danger-dim);
+            color: var(--red-primary);
+        }
+
+        .clickable-row {
+            cursor: pointer;
+            transition: all var(--transition-fast);
+        }
+
+        .clickable-row:hover td {
+            background: var(--bg-main) !important;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+            padding-top: 16px;
+            border-top: 1px solid #F0F0F5;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .pagination-info {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .pagination-buttons {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .pagination-buttons button,
+        .pagination-buttons .page-btn {
+            padding: 6px 14px;
+            border: 1px solid #E5E5EA;
+            border-radius: var(--radius-sm);
+            background: var(--bg-white);
+            color: var(--text-secondary);
+            font-size: 13px;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            font-family: inherit;
+        }
+
+        .pagination-buttons button:hover,
+        .pagination-buttons .page-btn:hover {
+            border-color: var(--red-primary);
+            color: var(--red-primary);
+        }
+
+        .pagination-buttons .page-btn.active {
+            background: var(--red-primary);
+            color: white;
+            border-color: var(--red-primary);
+        }
+
+        .pagination-buttons button:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .view-link {
+            color: var(--red-primary);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 13px;
+        }
+
+        .view-link:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 640px) {
+            .history-controls {
+                flex-direction: column;
+            }
+            .search-box {
+                width: 100%;
+            }
+            .pagination {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ============ SIDEBAR ============ -->
+<div class="sidebar">
+    <div class="logo">
+        <div class="logo-icon">🛡️</div>
+        <div>
+            <h2>Wapiti UI</h2>
+            <p>Scanner Dashboard</p>
+        </div>
+    </div>
+
+    <div class="nav-section">MENU</div>
+    <a href="/" class="nav-item"><i class="ri-dashboard-line"></i> <span>Dashboard</span></a>
+    <a href="/scan-page" class="nav-item"><i class="ri-radar-line"></i> <span>New Scan</span></a>
+    <a href="/history-page" class="nav-item active"><i class="ri-time-line"></i> <span>Scan History</span></a>
+
+    <div class="sidebar-bottom">
+        <p>Last Target</p>
+        <h4 id="current-target">No scan yet</h4>
+    </div>
+</div>
+
+<!-- ============ MAIN ============ -->
+<div class="main">
+    <div class="topbar">
+        <div>
+            <h1>Scan History</h1>
+            <p>View all vulnerability scans</p>
+        </div>
+        <button class="scan-btn" onclick="window.location.href='/scan-page'">
+            <i class="ri-radar-line"></i> New Scan
+        </button>
+    </div>
+
+    <!-- Controls -->
+    <div class="history-controls">
+        <div class="search-box">
+            <i class="ri-search-line"></i>
+            <input type="text" id="searchInput" placeholder="Search by URL..." onkeyup="handleSearch(event)">
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="btn-secondary" style="padding:8px 16px;font-size:13px;" onclick="loadHistory(1)">🔄 Refresh</button>
+        </div>
+    </div>
+
+    <!-- Table -->
+    <div class="table-card">
+        <h3>All Scans</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Target URL</th>
+                    <th>Vulns</th>
+                    <th>Pages</th>
+                    <th>Duration</th>
+                    <th>Date</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="history-body">
+                <tr><td colspan="8" class="empty">Loading scans...</td></tr>
+            </tbody>
+        </table>
+
+        <!-- Pagination -->
+        <div class="pagination" id="pagination">
+            <div class="pagination-info" id="paginationInfo">Loading...</div>
+            <div class="pagination-buttons" id="paginationButtons"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentPage = 1;
+let totalPages = 1;
+let searchQuery = '';
+
+// ============================================
+// REUSABLE: Get latest scan target for sidebar
+// ============================================
+async function updateSidebarTarget() {
+    try {
+        const res = await fetch('/history?page=1&limit=1');
+        const data = await res.json();
+        if (data.scans && data.scans.length > 0) {
+            document.getElementById('current-target').textContent = data.scans[0].target_url;
+        }
+    } catch (e) { /* ignore */ }
+}
+updateSidebarTarget();
+
+// ============================================
+// LOAD HISTORY WITH PAGINATION
+// ============================================
+async function loadHistory(page = 1) {
+    currentPage = page;
+    const limit = 10;
+    const searchParam = searchQuery ? `&search=${encodeURIComponent(searchQuery)}` : '';
+    
+    try {
+        const response = await fetch(`/history?page=${page}&limit=${limit}${searchParam}`);
+        const data = await response.json();
+        
+        const tbody = document.getElementById('history-body');
+        
+        if (!data.scans || data.scans.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="8" class="empty">No scans found${searchQuery ? ' matching "' + searchQuery + '"' : ''}</td></tr>`;
+            document.getElementById('paginationInfo').textContent = 'No scans';
+            document.getElementById('paginationButtons').innerHTML = '';
+            return;
+        }
+        
+        // Build table rows
+        tbody.innerHTML = data.scans.map((scan, index) => {
+            const startIndex = (data.page - 1) * data.limit;
+            const rowNum = startIndex + index + 1;
+            
+            // Determine status
+            let statusClass = 'done';
+            let statusText = '✅ Done';
+            // You can add logic for pending/failed if you have that in your schema
+            
+            return `
+                <tr class="clickable-row" onclick="window.location.href='/history-page/${scan.id}'">
+                    <td>${rowNum}</td>
+                    <td><strong>${scan.target_url}</strong></td>
+                    <td><span style="color:var(--red-primary);font-weight:700;">${scan.vulnerabilities_found}</span></td>
+                    <td>${scan.pages_crawled}</td>
+                    <td>${scan.scan_duration}</td>
+                    <td>${new Date(scan.scanned_at).toLocaleDateString()} ${new Date(scan.scanned_at).toLocaleTimeString()}</td>
+                    <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+                    <td><a href="/history-page/${scan.id}" class="view-link">View</a></td>
+                </tr>
+            `;
+        }).join('');
+        
+        // Update pagination
+        const total = data.total || 0;
+        totalPages = data.total_pages || 1;
+        
+        document.getElementById('paginationInfo').textContent = 
+            `Showing ${data.scans.length > 0 ? (data.page - 1) * data.limit + 1 : 0}-${Math.min(data.page * data.limit, total)} of ${total} scans`;
+        
+        renderPaginationButtons(data.page, totalPages);
+        
+    } catch (error) {
+        console.error('Error loading history:', error);
+        document.getElementById('history-body').innerHTML = `<tr><td colspan="8" class="empty">Error loading scans. Please refresh.</td></tr>`;
+    }
+}
+
+// ============================================
+// RENDER PAGINATION BUTTONS
+// ============================================
+function renderPaginationButtons(currentPage, totalPages) {
+    const container = document.getElementById('paginationButtons');
+    let html = '';
+    
+    // Prev button
+    html += `<button onclick="loadHistory(${currentPage - 1})" ${currentPage <= 1 ? 'disabled' : ''}><i class="ri-arrow-left-s-line"></i></button>`;
+    
+    // Page numbers
+    let startPage = Math.max(1, currentPage - 2);
+    let endPage = Math.min(totalPages, currentPage + 2);
+    
+    if (startPage > 1) {
+        html += `<button class="page-btn" onclick="loadHistory(1)">1</button>`;
+        if (startPage > 2) html += `<span style="color:var(--text-muted);padding:0 4px;">…</span>`;
+    }
+    
+    for (let i = startPage; i <= endPage; i++) {
+        html += `<button class="page-btn ${i === currentPage ? 'active' : ''}" onclick="loadHistory(${i})">${i}</button>`;
+    }
+    
+    if (endPage < totalPages) {
+        if (endPage < totalPages - 1) html += `<span style="color:var(--text-muted);padding:0 4px;">…</span>`;
+        html += `<button class="page-btn" onclick="loadHistory(${totalPages})">${totalPages}</button>`;
+    }
+    
+    // Next button
+    html += `<button onclick="loadHistory(${currentPage + 1})" ${currentPage >= totalPages ? 'disabled' : ''}><i class="ri-arrow-right-s-line"></i></button>`;
+    
+    container.innerHTML = html;
+}
+
+// ============================================
+// SEARCH HANDLING
+// ============================================
+let searchTimeout = null;
+
+function handleSearch(event) {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+        searchQuery = event.target.value.trim();
+        loadHistory(1);
+    }, 400);
+}
+
+// ============================================
+// INITIAL LOAD
+// ============================================
+loadHistory(1);
+</script>
+</body>
+</html>

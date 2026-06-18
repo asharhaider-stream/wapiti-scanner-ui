@@ -7,7 +7,15 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from schema import ScanRequest, ScanResponse
 from scanner import run_scan
-from database import init_db, save_scan, get_history, save_findings, get_scan_findings, get_analytics_data
+from database import (
+    init_db, 
+    save_scan, 
+    save_findings, 
+    get_scan_findings, 
+    get_analytics_data,
+    get_paginated_history,
+    get_total_scans
+)
 
 
 @asynccontextmanager
@@ -19,9 +27,30 @@ app = FastAPI(lifespan=lifespan)
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
+
+# ============================================
+# PAGE ROUTES
+# ============================================
+
 @app.get("/")
 def dashboard():
     return FileResponse("templates/dashboard.html")
+
+@app.get("/scan-page")
+def scan_page():
+    return FileResponse("templates/new-scan.html")
+
+@app.get("/history-page")
+def history_page():
+    return FileResponse("templates/history.html")
+
+@app.get("/history-page/{scan_id}")
+def scan_detail_page(scan_id: int):
+    return FileResponse("templates/scan-detail.html")
+
+# ============================================
+# API ROUTES
+# ============================================
 
 @app.post("/scan", response_model=ScanResponse)
 def scan(scan_request: ScanRequest):
@@ -43,11 +72,21 @@ def scan(scan_request: ScanRequest):
 
     return result
 
-@app.get("/history")
-def history():
-    rows = get_history()
-    result = []
 
+@app.get("/history")
+def history(page: int = 1, limit: int = 10, search: str = None):
+    """
+    Get paginated scan history
+    - page: page number (default: 1)
+    - limit: scans per page (default: 10)
+    - search: optional URL filter
+    """
+    offset = (page - 1) * limit
+    
+    rows = get_paginated_history(limit, offset, search)
+    total = get_total_scans(search)
+    
+    result = []
     for row in rows:
         result.append({
             "id": row["id"],
@@ -58,8 +97,15 @@ def history():
             "vulnerabilities_found": row["vulnerabilities_found"],
             "scanned_at": row["scanned_at"]
         })
+    
+    return {
+        "scans": result,
+        "total": total,
+        "page": page,
+        "limit": limit,
+        "total_pages": (total + limit - 1) // limit
+    }
 
-    return result
 
 @app.get("/history/{scan_id}")
 def scan_detail(scan_id: int):
@@ -78,6 +124,7 @@ def scan_detail(scan_id: int):
         })
 
     return findings
+
 
 @app.get("/analytics")
 def analytics():

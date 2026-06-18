@@ -1,0 +1,430 @@
+/* ========================================
+   COLOR VARIABLES (Your New Palette)
+   ======================================== */
+:root {
+    /* Backgrounds */
+    --bg-main: #F4F3EF;        /* Main dashboard background */
+    --bg-white: #FFFFFF;       /* Cards, sidebar, panels */
+    
+    /* Text */
+    --text-dark: #1C1C1E;      /* Headings, body text */
+    --text-secondary: #3A3A3C; /* Secondary text */
+    --text-muted: #8E8E93;    /* Muted text */
+    
+    /* Red Accent */
+    --red-primary: #FF3B30;    /* Primary red (buttons, active states) */
+    --red-light: #FF2D55;      /* Alternative red */
+    --red-dim: rgba(255, 59, 48, 0.1);   /* Red background (badges) */
+    --red-outline: #FF3B30;    /* Red outline for secondary buttons */
+    
+    /* Status Colors */
+    --danger: #FF3B30;
+    --danger-dim: rgba(255, 59, 48, 0.12);
+    --warning: #FF9500;
+    --warning-dim: rgba(255, 149, 0, 0.12);
+    --success: #34C759;
+    --success-dim: rgba(52, 199, 89, 0.12);
+    --info: #007AFF;
+    --info-dim: rgba(0, 122, 255, 0.12);
+    
+    /* Shadows & Effects */
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.10);
+    
+    /* Border Radius */
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-xl: 20px;
+    
+    /* Transitions */
+    --transition-fast: 0.15s ease;
+    --transition-normal: 0.25s ease;
+}
+
+/* ========================================
+   RESET & BASE
+   ======================================== */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg-main);
+    min-height: 100vh;
+    color: var(--text-dark);
+    display: flex;
+}
+
+/* ========================================
+   SIDEBAR (White background)
+   ======================================== */
+.sidebar {
+    width: 230px;
+    min-height: 100vh;
+    background: var(--bg-white);
+    border-right: 1px solid rgba(0, 0, 0, 0.06);
+    padding: 28px 18px;
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    box-shadow: var(--shadow-sm);
+    z-index: 100;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0 6px;
+    margin-bottom: 32px;
+}
+
+.logo-icon {
+    width: 40px; height: 40px;
+    background: var(--red-primary);
+    border-radius: var(--radius-sm);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    color: white;
+}
+
+.logo h2 {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-dark);
+}
+.logo p {
+    font-size: 10px;
+    color: var(--text-muted);
+    letter-spacing: 0.3px;
+}
+
+.nav-section {
+    font-size: 10px;
+    color: var(--text-muted);
+    padding: 0 10px;
+    margin-bottom: 10px;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    font-weight: 600;
+}
+
+.nav-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    cursor: pointer;
+    margin-bottom: 2px;
+    text-decoration: none;
+    transition: all var(--transition-fast);
+}
+
+.nav-item:hover {
+    background: var(--red-dim);
+    color: var(--red-primary);
+}
+
+.nav-item.active {
+    background: var(--red-primary);
+    color: white;
+    box-shadow: 0 2px 8px rgba(255, 59, 48, 0.3);
+}
+
+.nav-item i {
+    font-size: 17px;
+    width: 20px;
+    text-align: center;
+}
+
+.sidebar-bottom {
+    margin-top: auto;
+    padding: 14px 16px;
+    background: var(--bg-main);
+    border-radius: var(--radius-md);
+    border: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+.sidebar-bottom p {
+    font-size: 10px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+}
+
+.sidebar-bottom h4 {
+    font-size: 13px;
+    color: var(--text-dark);
+    margin-top: 2px;
+    font-weight: 500;
+}
+
+/* ========================================
+   MAIN CONTENT
+   ======================================== */
+.main {
+    margin-left: 230px;
+    flex: 1;
+    padding: 28px 32px;
+    overflow-y: auto;
+    min-height: 100vh;
+}
+
+.topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 28px;
+}
+
+.topbar h1 {
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--text-dark);
+    letter-spacing: -0.5px;
+}
+
+.topbar p {
+    font-size: 14px;
+    color: var(--text-muted);
+    margin-top: 2px;
+}
+
+.scan-btn {
+    background: var(--red-primary);
+    color: white;
+    border: none;
+    padding: 10px 22px;
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all var(--transition-fast);
+    box-shadow: 0 2px 8px rgba(255, 59, 48, 0.25);
+}
+
+.scan-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 16px rgba(255, 59, 48, 0.35);
+}
+
+.scan-btn:active {
+    transform: translateY(0);
+}
+
+/* ========================================
+   KPI CARDS (White background)
+   ======================================== */
+.kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.kpi-card {
+    background: var(--bg-white);
+    border-radius: var(--radius-lg);
+    padding: 20px 24px;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid rgba(0, 0, 0, 0.04);
+    transition: all var(--transition-fast);
+}
+
+.kpi-card:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+}
+
+.kpi-card .label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+}
+
+.kpi-card .value {
+    font-size: 30px;
+    font-weight: 700;
+    color: var(--text-dark);
+    letter-spacing: -0.5px;
+}
+
+.kpi-card .sub {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 4px;
+}
+
+/* KPI Card Colors */
+.kpi-card.danger .value { color: var(--red-primary); }
+.kpi-card.success .value { color: var(--success); }
+.kpi-card.info .value { color: var(--info); }
+.kpi-card.warning .value { color: var(--warning); }
+
+/* ========================================
+   CHART CARDS (White background)
+   ======================================== */
+.charts-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.chart-card {
+    background: var(--bg-white);
+    border-radius: var(--radius-lg);
+    padding: 20px 24px;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid rgba(0, 0, 0, 0.04);
+    transition: all var(--transition-fast);
+}
+
+.chart-card:hover {
+    box-shadow: var(--shadow-md);
+}
+
+.chart-card h3 {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 16px;
+    letter-spacing: 0.3px;
+}
+
+/* ========================================
+   TABLE CARD (White background)
+   ======================================== */
+.table-card {
+    background: var(--bg-white);
+    border-radius: var(--radius-lg);
+    padding: 20px 24px;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+.table-card h3 {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 16px;
+    letter-spacing: 0.3px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+th {
+    text-align: left;
+    padding: 10px 12px;
+    color: var(--text-muted);
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    border-bottom: 2px solid var(--bg-main);
+}
+
+td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--bg-main);
+    color: var(--text-secondary);
+}
+
+tr:hover td {
+    background: var(--bg-main);
+}
+
+/* ========================================
+   BADGES
+   ======================================== */
+.badge {
+    padding: 3px 12px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.badge.high,
+.badge.critical {
+    background: var(--danger-dim);
+    color: var(--red-primary);
+}
+
+.badge.medium {
+    background: var(--warning-dim);
+    color: var(--warning);
+}
+
+.badge.low {
+    background: var(--success-dim);
+    color: var(--success);
+}
+
+/* ========================================
+   EMPTY STATE
+   ======================================== */
+.empty {
+    text-align: center;
+    padding: 40px;
+    color: var(--text-muted);
+    font-size: 13px;
+}
+
+/* ========================================
+   RESPONSIVE
+   ======================================== */
+@media (max-width: 1024px) {
+    .kpi-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .charts-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 640px) {
+    .sidebar {
+        width: 60px;
+        padding: 16px 8px;
+    }
+    .logo h2, .logo p, .nav-item span, .nav-section, .sidebar-bottom {
+        display: none;
+    }
+    .nav-item {
+        justify-content: center;
+        padding: 12px;
+    }
+    .main {
+        margin-left: 60px;
+        padding: 16px;
+    }
+    .kpi-grid {
+        grid-template-columns: 1fr;
+    }
+    .topbar {
+        flex-direction: column;
+        gap: 12px;
+    }
+    .topbar h1 {
+        font-size: 20px;
+    }
+}

@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Scan - Wapiti UI</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css">
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        /* Page-specific styles */
+        .scan-form-container {
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        .form-card {
+            background: var(--bg-white);
+            border-radius: var(--radius-lg);
+            padding: 32px 36px;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid rgba(0, 0, 0, 0.04);
+        }
+
+        .form-card h2 {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 6px;
+        }
+
+        .form-card .subtitle {
+            font-size: 14px;
+            color: var(--text-muted);
+            margin-bottom: 24px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+        }
+
+        .form-group label .required {
+            color: var(--red-primary);
+            margin-left: 2px;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1.5px solid #E5E5EA;
+            border-radius: var(--radius-sm);
+            font-size: 14px;
+            color: var(--text-dark);
+            background: var(--bg-white);
+            transition: all var(--transition-fast);
+            font-family: inherit;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--red-primary);
+            box-shadow: 0 0 0 3px rgba(255, 59, 48, 0.12);
+        }
+
+        .form-group input::placeholder {
+            color: var(--text-muted);
+            font-size: 13px;
+        }
+
+        .form-group .helper {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 28px;
+            padding-top: 20px;
+            border-top: 1px solid #F0F0F5;
+        }
+
+        .btn-primary {
+            background: var(--red-primary);
+            color: white;
+            border: none;
+            padding: 10px 28px;
+            border-radius: var(--radius-sm);
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all var(--transition-fast);
+            box-shadow: 0 2px 8px rgba(255, 59, 48, 0.25);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 16px rgba(255, 59, 48, 0.35);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: var(--bg-white);
+            color: var(--red-primary);
+            border: 1.5px solid var(--red-primary);
+            padding: 10px 28px;
+            border-radius: var(--radius-sm);
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+        }
+
+        .btn-secondary:hover {
+            background: var(--red-dim);
+        }
+
+        /* Scan Status / Progress */
+        .scan-status {
+            display: none;
+            margin-top: 24px;
+            padding: 20px 24px;
+            background: var(--bg-main);
+            border-radius: var(--radius-md);
+            border: 1px solid rgba(0, 0, 0, 0.04);
+        }
+
+        .scan-status.visible {
+            display: block;
+        }
+
+        .scan-status .status-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .scan-status .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2.5px solid var(--bg-main);
+            border-top-color: var(--red-primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .scan-status .status-text {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        .scan-status .status-detail {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .scan-status .progress-bar {
+            width: 100%;
+            height: 4px;
+            background: #E5E5EA;
+            border-radius: 999px;
+            margin-top: 12px;
+            overflow: hidden;
+        }
+
+        .scan-status .progress-bar .fill {
+            height: 100%;
+            width: 0%;
+            background: var(--red-primary);
+            border-radius: 999px;
+            transition: width 0.5s ease;
+        }
+
+        /* Success / Error states */
+        .result-box {
+            display: none;
+            margin-top: 20px;
+            padding: 16px 20px;
+            border-radius: var(--radius-sm);
+            font-weight: 500;
+        }
+
+        .result-box.success {
+            display: block;
+            background: var(--success-dim);
+            color: var(--success);
+            border: 1px solid rgba(52, 199, 89, 0.2);
+        }
+
+        .result-box.error {
+            display: block;
+            background: var(--danger-dim);
+            color: var(--red-primary);
+            border: 1px solid rgba(255, 59, 48, 0.2);
+        }
+
+        @media (max-width: 640px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            .form-card {
+                padding: 20px;
+            }
+            .form-actions {
+                flex-direction: column;
+            }
+            .form-actions button {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ============ SIDEBAR ============ -->
+<div class="sidebar">
+    <div class="logo">
+        <div class="logo-icon">🛡️</div>
+        <div>
+            <h2>Wapiti UI</h2>
+            <p>Scanner Dashboard</p>
+        </div>
+    </div>
+
+    <div class="nav-section">MENU</div>
+    <a href="/" class="nav-item"><i class="ri-dashboard-line"></i> <span>Dashboard</span></a>
+    <a href="/scan-page" class="nav-item active"><i class="ri-radar-line"></i> <span>New Scan</span></a>
+    <a href="/history-page" class="nav-item"><i class="ri-time-line"></i> <span>Scan History</span></a>
+
+    <div class="sidebar-bottom">
+        <p>Last Target</p>
+        <h4 id="current-target">No scan yet</h4>
+    </div>
+</div>
+
+<!-- ============ MAIN ============ -->
+<div class="main">
+    <div class="topbar">
+        <div>
+            <h1>New Scan</h1>
+            <p>Start a vulnerability scan on a target URL</p>
+        </div>
+    </div>
+
+    <div class="scan-form-container">
+        <div class="form-card">
+            <h2>Configure Scan</h2>
+            <p class="subtitle">Enter the target URL and select modules to run</p>
+
+            <form id="scanForm">
+                <div class="form-group">
+                    <label>Target URL <span class="required">*</span></label>
+                    <input type="url" id="targetUrl" placeholder="https://example.com" required>
+                    <div class="helper">Full URL including protocol (http:// or https://)</div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Modules</label>
+                        <select id="modules">
+                            <option value="all">All Modules</option>
+                            <option value="sql">SQL Injection</option>
+                            <option value="xss">Cross-Site Scripting</option>
+                            <option value="file">File Disclosure</option>
+                            <option value="exec">Command Execution</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Scan Depth</label>
+                        <select id="depth">
+                            <option value="1">Quick (1 level)</option>
+                            <option value="2" selected>Standard (2 levels)</option>
+                            <option value="3">Deep (3 levels)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn-primary" id="scanBtn">
+                        <i class="ri-radar-line"></i> Start Scan
+                    </button>
+                    <button type="reset" class="btn-secondary">Reset</button>
+                </div>
+            </form>
+
+            <!-- Scan Status -->
+            <div class="scan-status" id="scanStatus">
+                <div class="status-header">
+                    <div class="spinner"></div>
+                    <span class="status-text" id="statusText">Scanning...</span>
+                </div>
+                <div class="status-detail" id="statusDetail">Starting scan...</div>
+                <div class="progress-bar">
+                    <div class="fill" id="progressFill"></div>
+                </div>
+            </div>
+
+            <!-- Result Messages -->
+            <div class="result-box" id="resultBox"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+// ============================================
+// REUSABLE: Get latest scan target for sidebar
+// ============================================
+async function updateSidebarTarget() {
+    try {
+        const res = await fetch('/history');
+        const data = await res.json();
+        if (data.length > 0) {
+            document.getElementById('current-target').textContent = data[0].target_url;
+        }
+    } catch (e) { /* ignore */ }
+}
+updateSidebarTarget();
+
+// ============================================
+// SCAN FORM HANDLING
+// ============================================
+const form = document.getElementById('scanForm');
+const scanBtn = document.getElementById('scanBtn');
+const statusDiv = document.getElementById('scanStatus');
+const statusText = document.getElementById('statusText');
+const statusDetail = document.getElementById('statusDetail');
+const progressFill = document.getElementById('progressFill');
+const resultBox = document.getElementById('resultBox');
+
+// Simulate progress (since Wapiti runs async)
+let progressInterval = null;
+
+form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const url = document.getElementById('targetUrl').value.trim();
+    const modules = document.getElementById('modules').value;
+    const depth = parseInt(document.getElementById('depth').value);
+
+    if (!url) {
+        showResult('Please enter a target URL', 'error');
+        return;
+    }
+
+    // Validate URL format
+    try {
+        new URL(url);
+    } catch {
+        showResult('Please enter a valid URL (including http:// or https://)', 'error');
+        return;
+    }
+
+    // Reset UI
+    resultBox.className = 'result-box';
+    resultBox.textContent = '';
+    statusDiv.classList.add('visible');
+    progressFill.style.width = '0%';
+    scanBtn.disabled = true;
+    scanBtn.innerHTML = '<i class="ri-loader-4-line ri-spin"></i> Scanning...';
+
+    // Simulate progress (frontend feedback only)
+    let progress = 0;
+    clearInterval(progressInterval);
+    progressInterval = setInterval(() => {
+        progress += Math.random() * 15;
+        if (progress > 95) progress = 95;
+        progressFill.style.width = progress + '%';
+    }, 500);
+
+    statusText.textContent = 'Scan in progress...';
+    statusDetail.textContent = `Target: ${url} | Modules: ${modules} | Depth: ${depth}`;
+
+    try {
+        // Send scan request to backend
+        const response = await fetch('/scan', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                target_url: url,
+                modules: modules === 'all' ? ['all'] : [modules],
+                depth: depth
+            })
+        });
+
+        const data = await response.json();
+
+        clearInterval(progressInterval);
+
+        if (response.ok) {
+            progressFill.style.width = '100%';
+            statusText.textContent = '✅ Scan Complete!';
+            statusDetail.textContent = `Found ${data.vulnerabilities?.length || 0} vulnerabilities in ${data.scan_duration}`;
+            showResult(`Scan complete! ${data.vulnerabilities?.length || 0} vulnerabilities found.`, 'success');
+            updateSidebarTarget();
+
+            // Redirect to history after a moment
+            setTimeout(() => {
+                window.location.href = '/history-page';
+            }, 2500);
+        } else {
+            statusText.textContent = '❌ Scan Failed';
+            statusDetail.textContent = data.detail || 'Unknown error occurred';
+            showResult(data.detail || 'Scan failed. Please try again.', 'error');
+        }
+
+    } catch (error) {
+        clearInterval(progressInterval);
+        statusText.textContent = '❌ Error';
+        statusDetail.textContent = error.message || 'Network error';
+        showResult('Network error. Is the backend running?', 'error');
+    } finally {
+        scanBtn.disabled = false;
+        scanBtn.innerHTML = '<i class="ri-radar-line"></i> Start Scan';
+    }
+});
+
+function showResult(message, type) {
+    resultBox.className = 'result-box ' + type;
+    resultBox.textContent = message;
+}
+
+// Reset form clears status
+form.addEventListener('reset', () => {
+    statusDiv.classList.remove('visible');
+    resultBox.className = 'result-box';
+    resultBox.textContent = '';
+    clearInterval(progressInterval);
+    progressFill.style.width = '0%';
+    scanBtn.disabled = false;
+    scanBtn.innerHTML = '<i class="ri-radar-line"></i> Start Scan';
+});
+</script>
+</body>
+</html>

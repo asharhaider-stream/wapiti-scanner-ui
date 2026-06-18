@@ -171,5 +171,44 @@ def get_scan_by_id(scan_id):
     conn.close()
     return scan
 
+def get_paginated_history(limit, offset, search=None):
+    """Get scans with pagination and optional search"""
+    conn = get_db_connection()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+    
+    if search:
+        cur.execute("""
+            SELECT * FROM scans 
+            WHERE target_url ILIKE %s
+            ORDER BY scanned_at DESC 
+            LIMIT %s OFFSET %s
+        """, (f"%{search}%", limit, offset))
+    else:
+        cur.execute("""
+            SELECT * FROM scans 
+            ORDER BY scanned_at DESC 
+            LIMIT %s OFFSET %s
+        """, (limit, offset))
+    
+    rows = cur.fetchall()
+    cur.close()
+    conn.close()
+    return rows
+
+def get_total_scans(search=None):
+    """Get total number of scans (for pagination)"""
+    conn = get_db_connection()
+    cur = conn.cursor()
+    
+    if search:
+        cur.execute("SELECT COUNT(*) FROM scans WHERE target_url ILIKE %s", (f"%{search}%",))
+    else:
+        cur.execute("SELECT COUNT(*) FROM scans")
+    
+    total = cur.fetchone()[0]
+    cur.close()
+    conn.close()
+    return total
+
 # Run init when module is imported
 init_db()

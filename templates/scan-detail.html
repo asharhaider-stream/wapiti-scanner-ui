@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scan Detail - Wapiti UI</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css">
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        /* Page-specific styles */
+        .scan-summary {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .summary-item {
+            background: var(--bg-white);
+            padding: 16px 20px;
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-sm);
+            border: 1px solid rgba(0, 0, 0, 0.04);
+        }
+
+        .summary-item .label {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .summary-item .value {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-top: 4px;
+        }
+
+        .summary-item .value.danger { color: var(--red-primary); }
+        .summary-item .value.success { color: var(--success); }
+        .summary-item .value.info { color: var(--info); }
+        .summary-item .value.warning { color: var(--warning); }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 500;
+            margin-bottom: 20px;
+            transition: all var(--transition-fast);
+        }
+
+        .back-link:hover {
+            color: var(--red-primary);
+        }
+
+        .findings-count {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 16px;
+        }
+
+        .severity-high { color: var(--red-primary); font-weight: 600; }
+        .severity-medium { color: var(--warning); font-weight: 600; }
+        .severity-low { color: var(--success); font-weight: 600; }
+
+        .badge-detail {
+            padding: 3px 12px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .badge-detail.high {
+            background: var(--danger-dim);
+            color: var(--red-primary);
+        }
+
+        .badge-detail.medium {
+            background: var(--warning-dim);
+            color: var(--warning);
+        }
+
+        .badge-detail.low {
+            background: var(--success-dim);
+            color: var(--success);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-muted);
+        }
+
+        .empty-state i {
+            font-size: 48px;
+            color: var(--text-muted);
+            opacity: 0.3;
+            margin-bottom: 12px;
+        }
+
+        .clickable-row {
+            cursor: pointer;
+            transition: all var(--transition-fast);
+        }
+
+        .clickable-row:hover td {
+            background: var(--bg-main) !important;
+        }
+
+        @media (max-width: 640px) {
+            .scan-summary {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ============ SIDEBAR ============ -->
+<div class="sidebar">
+    <div class="logo">
+        <div class="logo-icon">🛡️</div>
+        <div>
+            <h2>Wapiti UI</h2>
+            <p>Scanner Dashboard</p>
+        </div>
+    </div>
+
+    <div class="nav-section">MENU</div>
+    <a href="/" class="nav-item"><i class="ri-dashboard-line"></i> <span>Dashboard</span></a>
+    <a href="/scan-page" class="nav-item"><i class="ri-radar-line"></i> <span>New Scan</span></a>
+    <a href="/history-page" class="nav-item active"><i class="ri-time-line"></i> <span>Scan History</span></a>
+
+    <div class="sidebar-bottom">
+        <p>Last Target</p>
+        <h4 id="current-target">No scan yet</h4>
+    </div>
+</div>
+
+<!-- ============ MAIN ============ -->
+<div class="main">
+    <!-- Back button -->
+    <a href="/history-page" class="back-link">
+        <i class="ri-arrow-left-line"></i> Back to History
+    </a>
+
+    <!-- Scan info -->
+    <div class="topbar" style="margin-bottom:20px;">
+        <div>
+            <h1 id="scan-title">Scan #<span id="scan-id">—</span></h1>
+            <p id="scan-target">Loading...</p>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="scan-summary" id="scan-summary">
+        <div class="summary-item">
+            <div class="label">Vulnerabilities</div>
+            <div class="value danger" id="vuln-count">—</div>
+        </div>
+        <div class="summary-item">
+            <div class="label">Pages Crawled</div>
+            <div class="value info" id="pages-count">—</div>
+        </div>
+        <div class="summary-item">
+            <div class="label">Duration</div>
+            <div class="value warning" id="duration-value">—</div>
+        </div>
+        <div class="summary-item">
+            <div class="label">Modules Used</div>
+            <div class="value success" id="modules-value">—</div>
+        </div>
+    </div>
+
+    <!-- Findings Table -->
+    <div class="table-card">
+        <div class="findings-count" id="findings-count">Loading findings...</div>
+        <table>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Type</th>
+                    <th>URL</th>
+                    <th>Parameter</th>
+                    <th>Severity</th>
+                    <th>Method</th>
+                </tr>
+            </thead>
+            <tbody id="findings-body">
+                <tr><td colspan="6" class="empty">Loading...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+// ============================================
+// GET SCAN ID FROM URL
+// ============================================
+const pathParts = window.location.pathname.split('/');
+const scanId = pathParts[pathParts.length - 1];
+
+// ============================================
+// UPDATE SIDEBAR TARGET
+// ============================================
+async function updateSidebarTarget() {
+    try {
+        const res = await fetch('/history?page=1&limit=1');
+        const data = await res.json();
+        if (data.scans && data.scans.length > 0) {
+            document.getElementById('current-target').textContent = data.scans[0].target_url;
+        }
+    } catch (e) { /* ignore */ }
+}
+updateSidebarTarget();
+
+// ============================================
+// LOAD SCAN DETAIL
+// ============================================
+async function loadScanDetail() {
+    try {
+        // First, get the scan info from /history/{scan_id}
+        const response = await fetch(`/history/${scanId}`);
+        
+        if (!response.ok) {
+            throw new Error('Scan not found');
+        }
+        
+        const findings = await response.json();
+        
+        // Get scan metadata from /history with pagination? We need a better way.
+        // Let's fetch the first page and find our scan
+        const historyRes = await fetch('/history?limit=100');
+        const historyData = await historyRes.json();
+        
+        const scan = historyData.scans.find(s => s.id == scanId);
+        
+        if (scan) {
+            document.getElementById('scan-id').textContent = scan.id;
+            document.getElementById('scan-target').textContent = `Target: ${scan.target_url} | ${new Date(scan.scanned_at).toLocaleString()}`;
+            document.getElementById('vuln-count').textContent = scan.vulnerabilities_found;
+            document.getElementById('pages-count').textContent = scan.pages_crawled;
+            document.getElementById('duration-value').textContent = scan.scan_duration;
+            document.getElementById('modules-value').textContent = scan.modules || '—';
+        }
+        
+        // Render findings
+        const tbody = document.getElementById('findings-body');
+        const countEl = document.getElementById('findings-count');
+        
+        if (!findings || findings.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="6">
+                        <div class="empty-state">
+                            <i class="ri-shield-check-line"></i>
+                            <p>No vulnerabilities found in this scan</p>
+                        </div>
+                    </td>
+                </tr>
+            `;
+            countEl.textContent = '✅ No findings — your target is secure!';
+            return;
+        }
+        
+        countEl.textContent = `📋 ${findings.length} findings found`;
+        
+        tbody.innerHTML = findings.map((f, index) => {
+            const severityClass = f.severity ? f.severity.toLowerCase() : 'low';
+            return `
+                <tr>
+                    <td>${index + 1}</td>
+                    <td><strong>${f.type || '—'}</strong></td>
+                    <td style="word-break:break-all;max-width:200px;">${f.url || '—'}</td>
+                    <td>${f.parameter || '—'}</td>
+                    <td><span class="badge-detail ${severityClass}">${f.severity || 'Unknown'}</span></td>
+                    <td>${f.method || '—'}</td>
+                </tr>
+            `;
+        }).join('');
+        
+    } catch (error) {
+        console.error('Error loading scan detail:', error);
+        document.getElementById('findings-body').innerHTML = `
+            <tr><td colspan="6" class="empty">Error loading findings. Please refresh.</td></tr>
+        `;
+        document.getElementById('findings-count').textContent = '❌ Error loading scan';
+    }
+}
+
+// ============================================
+// INITIAL LOAD
+// ============================================
+loadScanDetail();
+</script>
+</body>
+</html>
