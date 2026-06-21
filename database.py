@@ -20,7 +20,7 @@ def init_db():
     conn = get_db_connection()
     cur = conn.cursor()
     
-    # Create scans table (matching your schema)
+    # Create scans table
     cur.execute("""
         CREATE TABLE IF NOT EXISTS scans (
             id SERIAL PRIMARY KEY,
@@ -33,7 +33,7 @@ def init_db():
         )
     """)
     
-    # Create findings table (matching your schema)
+    # Create findings table
     cur.execute("""
         CREATE TABLE IF NOT EXISTS findings (
             id SERIAL PRIMARY KEY,
@@ -67,28 +67,25 @@ def save_scan(target_url, modules, pages_crawled, scan_duration, vulnerabilities
     conn.close()
     return scan_id
 
-def get_history():
-    """Get last 10 scans ordered by date"""
-    conn = get_db_connection()
-    cur = conn.cursor(cursor_factory=RealDictCursor)
-    
-    cur.execute("SELECT * FROM scans ORDER BY scanned_at DESC LIMIT 10")
-    rows = cur.fetchall()
-    
-    cur.close()
-    conn.close()
-    return rows
-
 def save_findings(scan_id, vulnerabilities):
     """Save vulnerability findings for a scan"""
     conn = get_db_connection()
     cur = conn.cursor()
     
     for vuln in vulnerabilities:
-        cur.execute("""
-            INSERT INTO findings (scan_id, type, url, parameter, severity, method)
-            VALUES (%s, %s, %s, %s, %s, %s)
-        """, (scan_id, vuln["type"], vuln["url"], vuln["parameter"], vuln["severity"], vuln["method"]))
+        # Check if vuln is a dict or a Vulnerability object
+        if hasattr(vuln, 'type'):
+            # It's a Vulnerability object
+            cur.execute("""
+                INSERT INTO findings (scan_id, type, url, parameter, severity, method)
+                VALUES (%s, %s, %s, %s, %s, %s)
+            """, (scan_id, vuln.type, vuln.url, vuln.parameter, vuln.severity, vuln.method))
+        else:
+            # It's a dict
+            cur.execute("""
+                INSERT INTO findings (scan_id, type, url, parameter, severity, method)
+                VALUES (%s, %s, %s, %s, %s, %s)
+            """, (scan_id, vuln["type"], vuln["url"], vuln["parameter"], vuln["severity"], vuln["method"]))
     
     cur.close()
     conn.close()

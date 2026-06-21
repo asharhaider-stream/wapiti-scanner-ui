@@ -1,23 +1,16 @@
 /* ========================================
-   COLOR VARIABLES (Your New Palette)
+   COLOR VARIABLES
    ======================================== */
 :root {
-    /* Backgrounds */
-    --bg-main: #F4F3EF;        /* Main dashboard background */
-    --bg-white: #FFFFFF;       /* Cards, sidebar, panels */
-    
-    /* Text */
-    --text-dark: #1C1C1E;      /* Headings, body text */
-    --text-secondary: #3A3A3C; /* Secondary text */
-    --text-muted: #8E8E93;    /* Muted text */
-    
-    /* Red Accent */
-    --red-primary: #FF3B30;    /* Primary red (buttons, active states) */
-    --red-light: #FF2D55;      /* Alternative red */
-    --red-dim: rgba(255, 59, 48, 0.1);   /* Red background (badges) */
-    --red-outline: #FF3B30;    /* Red outline for secondary buttons */
-    
-    /* Status Colors */
+    --bg-main: #F4F3EF;
+    --bg-white: #FFFFFF;
+    --text-dark: #1C1C1E;
+    --text-secondary: #3A3A3C;
+    --text-muted: #8E8E93;
+    --red-primary: #FF3B30;
+    --red-light: #FF2D55;
+    --red-dim: rgba(255, 59, 48, 0.1);
+    --red-outline: #FF3B30;
     --danger: #FF3B30;
     --danger-dim: rgba(255, 59, 48, 0.12);
     --warning: #FF9500;
@@ -26,19 +19,13 @@
     --success-dim: rgba(52, 199, 89, 0.12);
     --info: #007AFF;
     --info-dim: rgba(0, 122, 255, 0.12);
-    
-    /* Shadows & Effects */
     --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
     --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
     --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.10);
-    
-    /* Border Radius */
     --radius-sm: 8px;
     --radius-md: 12px;
     --radius-lg: 16px;
     --radius-xl: 20px;
-    
-    /* Transitions */
     --transition-fast: 0.15s ease;
     --transition-normal: 0.25s ease;
 }
@@ -57,7 +44,7 @@ body {
 }
 
 /* ========================================
-   SIDEBAR (White background)
+   SIDEBAR
    ======================================== */
 .sidebar {
     width: 230px;
@@ -223,7 +210,7 @@ body {
 }
 
 /* ========================================
-   KPI CARDS (White background)
+   KPI CARDS
    ======================================== */
 .kpi-grid {
     display: grid;
@@ -268,14 +255,13 @@ body {
     margin-top: 4px;
 }
 
-/* KPI Card Colors */
 .kpi-card.danger .value { color: var(--red-primary); }
 .kpi-card.success .value { color: var(--success); }
 .kpi-card.info .value { color: var(--info); }
 .kpi-card.warning .value { color: var(--warning); }
 
 /* ========================================
-   CHART CARDS (White background)
+   CHART CARDS
    ======================================== */
 .charts-grid {
     display: grid;
@@ -306,7 +292,7 @@ body {
 }
 
 /* ========================================
-   TABLE CARD (White background)
+   TABLE CARD
    ======================================== */
 .table-card {
     background: var(--bg-white);

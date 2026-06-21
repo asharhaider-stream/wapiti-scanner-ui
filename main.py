@@ -5,7 +5,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
-from schema import ScanRequest, ScanResponse
+from schema import ScanRequest, ScanResponse, Vulnerability
 from scanner import run_scan
 from database import (
     init_db, 
@@ -48,29 +48,49 @@ def history_page():
 def scan_detail_page(scan_id: int):
     return FileResponse("templates/scan-detail.html")
 
+
 # ============================================
 # API ROUTES
 # ============================================
 
+# In the /scan endpoint
 @app.post("/scan", response_model=ScanResponse)
 def scan(scan_request: ScanRequest):
     result = run_scan(scan_request)
-
+    
     if result is None:
         from fastapi import HTTPException
         raise HTTPException(status_code=500, detail="Scan failed")
-
+    
+    # Convert vulnerabilities to Vulnerability objects
+    vulnerabilities = [
+        Vulnerability(
+            type=v["type"],
+            url=v["url"],
+            parameter=v.get("parameter", ""),
+            severity=v.get("severity", "medium"),
+            method=v.get("method", "GET")
+        )
+        for v in result["vulnerabilities"]
+    ]
+    
     scan_id = save_scan(
         target_url=result["target_url"],
         modules=",".join(result["modules_run"]),
         pages_crawled=result["pages_crawled"],
         scan_duration=result["scan_duration"],
-        vulnerabilities_found=len(result["vulnerabilities"])
+        vulnerabilities_found=len(vulnerabilities)
     )
-
-    save_findings(scan_id, result["vulnerabilities"])
-
-    return result
+    
+    save_findings(scan_id, vulnerabilities)
+    
+    return ScanResponse(
+        target_url=result["target_url"],
+        pages_crawled=result["pages_crawled"],
+        scan_duration=result["scan_duration"],
+        modules_run=result["modules_run"],
+        vulnerabilities=vulnerabilities
+    )
 
 
 @app.get("/history")

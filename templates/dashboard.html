@@ -7,7 +7,6 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="/static/style.css">
-    <!-- All inline CSS removed -->
 </head>
 <body>
 
@@ -19,12 +18,10 @@
             <p>Scanner Dashboard</p>
         </div>
     </div>
-
     <div class="nav-section">MENU</div>
-    <a href="/" class="nav-item active"><i class="ri-dashboard-line"></i> Dashboard</a>
-    <a href="/scan-page" class="nav-item"><i class="ri-radar-line"></i> New Scan</a>
-    <a href="/history-page" class="nav-item"><i class="ri-time-line"></i> Scan History</a>
-
+    <a href="/" class="nav-item active"><i class="ri-dashboard-line"></i> <span>Dashboard</span></a>
+    <a href="/scan-page" class="nav-item"><i class="ri-radar-line"></i> <span>New Scan</span></a>
+    <a href="/history-page" class="nav-item"><i class="ri-time-line"></i> <span>Scan History</span></a>
     <div class="sidebar-bottom">
         <p>Last Target</p>
         <h4 id="current-target">No scan yet</h4>
@@ -69,25 +66,25 @@
         <div class="chart-card">
             <h3>Vulnerability Types</h3>
             <div style="position:relative;height:200px">
-                <canvas id="vulnTypesChart" role="img" aria-label="Bar chart of vulnerability types">Vulnerability type distribution</canvas>
+                <canvas id="vulnTypesChart"></canvas>
             </div>
         </div>
         <div class="chart-card">
             <h3>Severity Distribution</h3>
             <div style="position:relative;height:200px">
-                <canvas id="severityChart" role="img" aria-label="Doughnut chart of severity levels">Severity distribution</canvas>
+                <canvas id="severityChart"></canvas>
             </div>
         </div>
         <div class="chart-card">
             <h3>Most Vulnerable Endpoints</h3>
             <div style="position:relative;height:200px">
-                <canvas id="endpointsChart" role="img" aria-label="Horizontal bar chart of endpoints">Top vulnerable endpoints</canvas>
+                <canvas id="endpointsChart"></canvas>
             </div>
         </div>
         <div class="chart-card">
             <h3>Scan Trend</h3>
             <div style="position:relative;height:200px">
-                <canvas id="trendChart" role="img" aria-label="Line chart of scan trend">Vulnerabilities over time</canvas>
+                <canvas id="trendChart"></canvas>
             </div>
         </div>
     </div>
@@ -116,26 +113,32 @@ let vulnTypesChart, severityChart, endpointsChart, trendChart;
 
 async function loadAnalytics() {
     try {
-        const [historyRes, analyticsRes] = await Promise.all([
-            fetch('/history'),
-            fetch('/analytics')
-        ]);
-        const history = await historyRes.json();
+        const historyRes = await fetch('/history?limit=10');
+        const historyData = await historyRes.json();
+        const history = historyData.scans || [];
+        
+        const analyticsRes = await fetch('/analytics');
         const analytics = await analyticsRes.json();
 
         if (history.length > 0) {
-            const totalVulns = history.reduce((sum, s) => sum + s.vulnerabilities_found, 0);
+            const totalVulns = history.reduce((sum, s) => sum + (s.vulnerabilities_found || 0), 0);
             document.getElementById('total-vulns').textContent = totalVulns;
-            document.getElementById('total-scans').textContent = history.length;
-            document.getElementById('last-duration').textContent = history[0].scan_duration;
-            document.getElementById('pages-crawled').textContent = history[0].pages_crawled;
-            document.getElementById('current-target').textContent = history[0].target_url;
+            document.getElementById('total-scans').textContent = analytics.total_scans || history.length;
+            document.getElementById('last-duration').textContent = history[0].scan_duration || '—';
+            document.getElementById('pages-crawled').textContent = history[0].pages_crawled || '0';
+            document.getElementById('current-target').textContent = history[0].target_url || 'No scan yet';
+        } else {
+            document.getElementById('total-vulns').textContent = '—';
+            document.getElementById('total-scans').textContent = '—';
+            document.getElementById('last-duration').textContent = '—';
+            document.getElementById('pages-crawled').textContent = '—';
+            document.getElementById('current-target').textContent = 'No scan yet';
         }
 
-        buildVulnTypesChart(analytics.vuln_types);
-        buildSeverityChart(analytics.severity_distribution);
-        buildEndpointsChart(analytics.top_endpoints);
-        buildTrendChart(analytics.scan_trend);
+        buildVulnTypesChart(analytics.vulnerability_types || []);
+        buildSeverityChart(analytics.severity_distribution || []);
+        buildEndpointsChart(analytics.top_endpoints || []);
+        buildTrendChart(analytics.timeline || []);
 
         if (history.length > 0) {
             const findingsRes = await fetch(`/history/${history[0].id}`);
@@ -143,75 +146,216 @@ async function loadAnalytics() {
             renderFindings(findings);
         }
 
-    } catch(e) { console.error(e); }
+    } catch(e) { 
+        console.error('Error loading analytics:', e); 
+    }
 }
 
 function buildVulnTypesChart(data) {
     if (vulnTypesChart) vulnTypesChart.destroy();
-    vulnTypesChart = new Chart(document.getElementById('vulnTypesChart'), {
+    const ctx = document.getElementById('vulnTypesChart');
+    if (!ctx) return;
+    
+    if (!data || data.length === 0) {
+        vulnTypesChart = new Chart(ctx, {
+            type: 'bar',
+            data: { labels: ['No Data'], datasets: [{ data: [0], backgroundColor: '#E5E5EA' }] },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+        });
+        return;
+    }
+    
+    vulnTypesChart = new Chart(ctx, {
         type: 'bar',
         data: {
-            labels: data.map(d => d.type),
-            datasets: [{ data: data.map(d => d.count), backgroundColor: ['#3b82f6','#8b5cf6','#f87171','#34d399'], borderRadius: 6 }]
+            labels: data.map(d => d.type || 'Unknown'),
+            datasets: [{
+                data: data.map(d => d.count),
+                backgroundColor: ['#FF3B30', '#FF9500', '#34C759', '#007AFF', '#5856D6', '#AF52DE'],
+                borderRadius: 6
+            }]
         },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: '#ffffff66', font: { size: 10 } }, grid: { color: '#ffffff0d' } }, y: { ticks: { color: '#ffffff66' }, grid: { color: '#ffffff0d' }, beginAtZero: true } } }
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                x: { 
+                    ticks: { color: '#8E8E93', font: { size: 10 } }, 
+                    grid: { color: 'rgba(0,0,0,0.05)' } 
+                },
+                y: { 
+                    ticks: { color: '#8E8E93' }, 
+                    grid: { color: 'rgba(0,0,0,0.05)' }, 
+                    beginAtZero: true 
+                }
+            }
+        }
     });
 }
 
 function buildSeverityChart(data) {
     if (severityChart) severityChart.destroy();
-    severityChart = new Chart(document.getElementById('severityChart'), {
+    const ctx = document.getElementById('severityChart');
+    if (!ctx) return;
+    
+    if (!data || data.length === 0) {
+        severityChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: { labels: ['No Data'], datasets: [{ data: [1], backgroundColor: ['#E5E5EA'] }] },
+            options: { responsive: true, maintainAspectRatio: false, cutout: '65%', plugins: { legend: { display: false } } }
+        });
+        return;
+    }
+    
+    const colors = {
+        'critical': '#FF2D55',
+        'high': '#FF3B30',
+        'medium': '#FF9500',
+        'low': '#34C759'
+    };
+    
+    severityChart = new Chart(ctx, {
         type: 'doughnut',
         data: {
-            labels: data.map(d => d.severity),
-            datasets: [{ data: data.map(d => d.count), backgroundColor: ['#f87171','#fbbf24','#34d399'], borderWidth: 0 }]
+            labels: data.map(d => d.severity || 'Unknown'),
+            datasets: [{
+                data: data.map(d => d.count),
+                backgroundColor: data.map(d => colors[d.severity?.toLowerCase()] || '#8E8E93'),
+                borderWidth: 0
+            }]
         },
-        options: { responsive: true, maintainAspectRatio: false, cutout: '65%', plugins: { legend: { position: 'bottom', labels: { color: '#ffffff80', font: { size: 11 }, padding: 16 } } } }
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '65%',
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: { color: '#3A3A3C', font: { size: 11 }, padding: 16 }
+                }
+            }
+        }
     });
 }
 
 function buildEndpointsChart(data) {
     if (endpointsChart) endpointsChart.destroy();
-    endpointsChart = new Chart(document.getElementById('endpointsChart'), {
+    const ctx = document.getElementById('endpointsChart');
+    if (!ctx) return;
+    
+    if (!data || data.length === 0) {
+        endpointsChart = new Chart(ctx, {
+            type: 'bar',
+            data: { labels: ['No Data'], datasets: [{ data: [0], backgroundColor: '#E5E5EA' }] },
+            options: { 
+                responsive: true, 
+                maintainAspectRatio: false, 
+                indexAxis: 'y', 
+                plugins: { legend: { display: false } } 
+            }
+        });
+        return;
+    }
+    
+    endpointsChart = new Chart(ctx, {
         type: 'bar',
         data: {
-            labels: data.map(d => d.url),
-            datasets: [{ data: data.map(d => d.count), backgroundColor: '#8b5cf6', borderRadius: 6 }]
+            labels: data.map(d => d.url || 'Unknown'),
+            datasets: [{
+                data: data.map(d => d.count),
+                backgroundColor: '#FF3B30',
+                borderRadius: 6
+            }]
         },
-        options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y', plugins: { legend: { display: false } }, scales: { x: { ticks: { color: '#ffffff66' }, grid: { color: '#ffffff0d' }, beginAtZero: true }, y: { ticks: { color: '#ffffff66', font: { size: 11 } }, grid: { color: '#ffffff0d' } } } }
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            indexAxis: 'y',
+            plugins: { legend: { display: false } },
+            scales: {
+                x: { 
+                    ticks: { color: '#8E8E93' }, 
+                    grid: { color: 'rgba(0,0,0,0.05)' }, 
+                    beginAtZero: true 
+                },
+                y: { 
+                    ticks: { color: '#8E8E93', font: { size: 10 } }, 
+                    grid: { color: 'rgba(0,0,0,0.05)' } 
+                }
+            }
+        }
     });
 }
 
 function buildTrendChart(data) {
     if (trendChart) trendChart.destroy();
-    trendChart = new Chart(document.getElementById('trendChart'), {
+    const ctx = document.getElementById('trendChart');
+    if (!ctx) return;
+    
+    if (!data || data.length === 0) {
+        trendChart = new Chart(ctx, {
+            type: 'line',
+            data: { labels: ['No Data'], datasets: [{ data: [0], borderColor: '#E5E5EA' }] },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+        });
+        return;
+    }
+    
+    trendChart = new Chart(ctx, {
         type: 'line',
         data: {
-            labels: data.map(d => d.scanned_at.split(' ')[0]),
-            datasets: [{ data: data.map(d => d.vulnerabilities_found), borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.1)', fill: true, tension: 0.4, pointBackgroundColor: '#3b82f6' }]
+            labels: data.map(d => d.date || ''),
+            datasets: [{
+                data: data.map(d => d.count || 0),
+                borderColor: '#FF3B30',
+                backgroundColor: 'rgba(255, 59, 48, 0.1)',
+                fill: true,
+                tension: 0.4,
+                pointBackgroundColor: '#FF3B30',
+                pointRadius: 4
+            }]
         },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: '#ffffff66', font: { size: 10 } }, grid: { color: '#ffffff0d' } }, y: { ticks: { color: '#ffffff66' }, grid: { color: '#ffffff0d' }, beginAtZero: true } } }
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                x: { 
+                    ticks: { color: '#8E8E93', font: { size: 10 } }, 
+                    grid: { color: 'rgba(0,0,0,0.05)' } 
+                },
+                y: { 
+                    ticks: { color: '#8E8E93' }, 
+                    grid: { color: 'rgba(0,0,0,0.05)' }, 
+                    beginAtZero: true 
+                }
+            }
+        }
     });
 }
 
 function renderFindings(findings) {
     const tbody = document.getElementById('findings-body');
-    if (!findings.length) {
-        tbody.innerHTML = '<tr><td colspan="5" class="empty">No findings for this scan</td></tr>';
+    
+    if (!findings || findings.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="empty">No vulnerabilities found in latest scan ✅</td></tr>';
         return;
     }
-    tbody.innerHTML = findings.map(f => `
-        <tr>
-            <td>${f.type}</td>
-            <td>${f.url}</td>
-            <td>${f.parameter}</td>
-            <td><span class="badge ${f.severity}">${f.severity}</span></td>
-            <td>${f.method}</td>
-        </tr>
-    `).join('');
+    
+    tbody.innerHTML = findings.map(f => {
+        const severityClass = f.severity ? f.severity.toLowerCase() : 'low';
+        return `
+            <tr>
+                <td><strong>${f.type || '—'}</strong></td>
+                <td style="word-break:break-all;max-width:250px;">${f.url || '—'}</td>
+                <td>${f.parameter || '—'}</td>
+                <td><span class="badge ${severityClass}">${f.severity || 'Unknown'}</span></td>
+                <td>${f.method || '—'}</td>
+            </tr>
+        `;
+    }).join('');
 }
 
 loadAnalytics();
 </script>
-</body>
-</html>
